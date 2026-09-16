@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>PUNTONET — Dashboard Ejecutivo</title>
+<style>
+  :root {
+    --navy: #1E2761;
+    --navy-dark: #141B45;
+    --ice: #CADCFC;
+    --amber: #D68910;
+    --red: #C0392B;
+    --green: #1E8449;
+    --grey: #5B6584;
+    --card-bg: #F4F6FB;
+    --bg: #FFFFFF;
+    --text: #1E2761;
+    --text-secondary: #5B6584;
+    --border: #E1E0D9;
+  }
+  :root:not([data-theme="light"]) {
+    --card-bg: #F4F6FB;
+    --bg: #FFFFFF;
+    --text: #1E2761;
+    --text-secondary: #5B6584;
+    --border: #E1E0D9;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --card-bg: #1c2340;
+      --bg: #10142c;
+      --text: #E8ECF7;
+      --text-secondary: #A8B0CC;
+      --border: #2c355c;
+    }
+  }
+  :root[data-theme="dark"] {
+    --card-bg: #1c2340;
+    --bg: #10142c;
+    --text: #E8ECF7;
+    --text-secondary: #A8B0CC;
+    --border: #2c355c;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    padding: 0 0 3rem;
+  }
+  header {
+    background: var(--navy);
+    color: white;
+    padding: 2rem 1.5rem 1.5rem;
+  }
+  header h1 { margin: 0 0 0.3rem; font-size: 1.6rem; font-weight: 700; }
+  header p { margin: 0; color: var(--ice); font-size: 0.95rem; }
+  .container { max-width: 1200px; margin: 0 auto; padding: 0 1.5rem; }
+  .kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 12px;
+    margin-top: -1.5rem;
+  }
+  .kpi-card {
+    background: var(--navy);
+    color: white;
+    border-radius: 10px;
+    padding: 1rem 1.1rem;
+    min-width: 0;
+  }
+  .kpi-card .label { font-size: 0.72rem; color: var(--ice); text-transform: uppercase; letter-spacing: 0.03em; }
+  .kpi-card .value { font-size: 1.5rem; font-weight: 700; margin-top: 0.2rem; }
+  .kpi-card.alert { background: var(--red); }
+  section { margin-top: 2.2rem; }
+  h2 { font-size: 1.15rem; margin: 0 0 0.3rem; color: var(--text); }
+  .sub { color: var(--text-secondary); font-size: 0.85rem; margin: 0 0 1rem; }
+  .grid2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+  }
+  @media (max-width: 800px) { .grid2 { grid-template-columns: 1fr; } }
+  .card {
+    background: var(--card-bg);
+    border-radius: 12px;
+    padding: 1.2rem;
+    border: 1px solid var(--border);
+  }
+  canvas { max-width: 100%; }
+  table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+  th, td { text-align: left; padding: 0.5rem 0.6rem; border-bottom: 1px solid var(--border); white-space: nowrap; }
+  th { color: var(--text-secondary); font-weight: 600; font-size: 0.75rem; text-transform: uppercase; }
+  .badge { display: inline-block; padding: 2px 10px; border-radius: 12px; font-size: 0.75rem; font-weight: 600; }
+  .badge-rojo { background: #F9E0DE; color: var(--red); }
+  .badge-amarillo { background: #FBEEDD; color: var(--amber); }
+  .badge-verde { background: #DCEFE3; color: var(--green); }
+  .table-wrap { overflow-x: auto; }
+  .semaforo-row { display: flex; gap: 8px; align-items: center; margin-bottom: 10px; }
+  .semaforo-bar { height: 26px; border-radius: 4px; }
+  .legend { display: flex; gap: 16px; font-size: 0.8rem; color: var(--text-secondary); margin-top: 8px; flex-wrap: wrap; }
+  .legend span { display: inline-flex; align-items: center; gap: 5px; }
+  .dot { width: 10px; height: 10px; border-radius: 2px; display: inline-block; }
+  footer { text-align: center; color: var(--text-secondary); font-size: 0.8rem; margin-top: 3rem; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>PUNTONET — Dashboard Ejecutivo Mensual</h1>
+  <p>Metas, Compensaciones y Calidad de Venta · Data Business Analyst · Base 2024</p>
+</header>
+
+<div class="container">
+  <div class="kpi-grid" id="kpiGrid"></div>
+
+  <section>
+    <h2>% Cumplimiento de Meta por Ciudad</h2>
+    <p class="sub">Meta anual: 70,130 unidades · Ventas reales: 54,824</p>
+    <div class="card"><canvas id="chartCiudad" height="90"></canvas></div>
+  </section>
+
+  <section>
+    <div class="grid2">
+      <div>
+        <h2>% Mala Venta por Canal</h2>
+        <div class="card"><canvas id="chartMalaVenta" height="110"></canvas></div>
+      </div>
+      <div>
+        <h2>% Early Churn por Canal (desde activación)</h2>
+        <div class="card"><canvas id="chartChurn" height="110"></canvas></div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Semáforo de Alertas</h2>
+    <p class="sub">Rojo = cumplimiento bajo y/o mala venta y/o churn por encima de umbral</p>
+    <div class="grid2">
+      <div class="card">
+        <strong style="font-size:0.9rem">Vendedores (624)</strong>
+        <div style="margin-top:12px" id="semVendedor"></div>
+      </div>
+      <div class="card">
+        <strong style="font-size:0.9rem">Coordinadores (33)</strong>
+        <div style="margin-top:12px" id="semCoordinador"></div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Top 10 Vendedores en Alerta</h2>
+    <p class="sub">Excluye vendedores con menos de 15 ventas (evita ruido estadístico)</p>
+    <div class="card table-wrap">
+      <table id="tableVendedores"></table>
+    </div>
+  </section>
+
+  <section>
+    <h2>Top 5 Coordinadores en Alerta</h2>
+    <div class="card table-wrap">
+      <table id="tableCoordinadores"></table>
+    </div>
+  </section>
+
+  <footer>PUNTONET · Caso DBA — Gobierno de Datos · Datos agregados, sin información a nivel de cliente</footer>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script>
+const DATA = {"kpi": {"ventas_totales": 54824, "cumplimiento_global": 0.781748181947811, "tasa_mala_venta": 0.194294469575368, "tasa_early_churn": 0.128939880344375, "comision_vendedores": 241132.875, "comision_coordinadores": 27856.01125, "mrc_mensual": 1211269.48, "mrc_anual": 14535233.76, "concentracion_top3_prom": 0.850967542131479}, "ciudades": [{"ciudad": "Quito", "meta": 32000, "ventas": 23042, "cumplimiento": 0.7200625}, {"ciudad": "Guayaquil", "meta": 15000, "ventas": 15378, "cumplimiento": 1.0252}, {"ciudad": "Santo Domingo", "meta": 5000, "ventas": 2724, "cumplimiento": 0.5448}, {"ciudad": "Manta", "meta": 3000, "ventas": 2327, "cumplimiento": 0.775666666666667}, {"ciudad": "Cuenca", "meta": 2000, "ventas": 2161, "cumplimiento": 1.0805}, {"ciudad": "Loja", "meta": 1100, "ventas": 1410, "cumplimiento": 1.28181818181818}, {"ciudad": "Ibarra", "meta": 1300, "ventas": 1169, "cumplimiento": 0.899230769230769}, {"ciudad": "Machala", "meta": 2130, "ventas": 1072, "cumplimiento": 0.503286384976526}, {"ciudad": "Riobamba", "meta": 1200, "ventas": 971, "cumplimiento": 0.809166666666667}, {"ciudad": "Portoviejo", "meta": 900, "ventas": 886, "cumplimiento": 0.984444444444445}, {"ciudad": "Tulcán", "meta": 700, "ventas": 739, "cumplimiento": 1.05571428571429}, {"ciudad": "Santa Elena", "meta": 800, "ventas": 506, "cumplimiento": 0.6325}, {"ciudad": "Guaranda", "meta": 400, "ventas": 476, "cumplimiento": 1.19}, {"ciudad": "Chone", "meta": 600, "ventas": 391, "cumplimiento": 0.651666666666667}, {"ciudad": "Ambato", "meta": 1000, "ventas": 253, "cumplimiento": 0.253}, {"ciudad": "Demás ciudades", "meta": 3000, "ventas": 1319, "cumplimiento": 0.439666666666667}], "canales": [{"canal": "Distribuidores", "ventas": 983, "mala_venta": 0.171922685656155, "early_churn": 0.448626653102747}, {"canal": "Otros", "ventas": 4081, "mala_venta": 0.160744915461897, "early_churn": 0.368537123254104}, {"canal": "Televentas", "ventas": 18077, "mala_venta": 0.185484317088012, "early_churn": 0.0736294739171323}, {"canal": "Venta Directa", "ventas": 31683, "mala_venta": 0.204336710538775, "early_churn": 0.119717198497617}], "riesgo_dist": [{"score": 0, "ventas": 21819, "pct": 0.397982635342186}, {"score": 1, "ventas": 22353, "pct": 0.407722895082446}, {"score": 2, "ventas": 9420, "pct": 0.171822559463009}, {"score": 3, "ventas": 1173, "pct": 0.0213957390923683}, {"score": 4, "ventas": 59, "pct": 0.00107617101999124}], "semaforo_vendedor": {"rojo": 365, "amarillo": 197, "verde": 62}, "semaforo_coordinador": {"rojo": 14, "amarillo": 16, "verde": 3}, "top_vendedores_alerta": [{"vendedor": "ANENY", "ciudad": "Manta", "coordinador": "MNB", "ventas": 31, "tasa_mala_venta": 0.483870967741936, "cumplimiento": 0.775666666666667, "semaforo": "Rojo"}, {"vendedor": "DAURS", "ciudad": "Portoviejo", "coordinador": "MNB", "ventas": 23, "tasa_mala_venta": 0.478260869565217, "cumplimiento": 0.984444444444445, "semaforo": "Rojo"}, {"vendedor": "VAODS", "ciudad": "Quito", "coordinador": "GSLS", "ventas": 26, "tasa_mala_venta": 0.423076923076923, "cumplimiento": 0.7200625, "semaforo": "Rojo"}, {"vendedor": "DARON", "ciudad": "Guayaquil", "coordinador": "G4", "ventas": 31, "tasa_mala_venta": 0.419354838709677, "cumplimiento": 1.0252, "semaforo": "Rojo"}, {"vendedor": "ELEJO", "ciudad": "Portoviejo", "coordinador": "MNB", "ventas": 39, "tasa_mala_venta": 0.41025641025641, "cumplimiento": 0.984444444444445, "semaforo": "Rojo"}, {"vendedor": "MIARZ", "ciudad": "Quito", "coordinador": "Q0", "ventas": 15, "tasa_mala_venta": 0.4, "cumplimiento": 0.7200625, "semaforo": "Rojo"}, {"vendedor": "MAERR", "ciudad": "Chone", "coordinador": "MNB", "ventas": 51, "tasa_mala_venta": 0.392156862745098, "cumplimiento": 0.651666666666667, "semaforo": "Rojo"}, {"vendedor": "GRUZZ", "ciudad": "Portoviejo", "coordinador": "MNB", "ventas": 57, "tasa_mala_venta": 0.385964912280702, "cumplimiento": 0.984444444444445, "semaforo": "Rojo"}, {"vendedor": "CRUAO", "ciudad": "Machala", "coordinador": "No definido", "ventas": 29, "tasa_mala_venta": 0.379310344827586, "cumplimiento": 0.503286384976526, "semaforo": "Rojo"}, {"vendedor": "LUUPE", "ciudad": "Manta", "coordinador": "MNB", "ventas": 130, "tasa_mala_venta": 0.376923076923077, "cumplimiento": 0.775666666666667, "semaforo": "Rojo"}], "top_coordinadores_alerta": [{"coordinador": "ULT", "ciudad": "Manta", "n_vendedores": 2, "ventas": 74, "tasa_mala_venta": 0.351351351351351, "cumplimiento": 0.775666666666667, "semaforo": "Rojo"}, {"coordinador": "G4", "ciudad": "Guayaquil", "n_vendedores": 9, "ventas": 1191, "tasa_mala_venta": 0.305625524769102, "cumplimiento": 1.0252, "semaforo": "Rojo"}, {"coordinador": "MNB", "ciudad": "Manta", "n_vendedores": 22, "ventas": 3318, "tasa_mala_venta": 0.288728149487643, "cumplimiento": 0.786342830614358, "semaforo": "Rojo"}, {"coordinador": "G2", "ciudad": "Guayaquil", "n_vendedores": 17, "ventas": 1761, "tasa_mala_venta": 0.261783077796706, "cumplimiento": 1.0252, "semaforo": "Rojo"}, {"coordinador": "G3", "ciudad": "Guayaquil", "n_vendedores": 15, "ventas": 2742, "tasa_mala_venta": 0.25419401896426, "cumplimiento": 0.990095672714613, "semaforo": "Rojo"}]};
+
+const NAVY = '#1E2761', AMBER = '#D68910', RED = '#C0392B', GREEN = '#1E8449', GREY = '#5B6584';
+const pct = (v, d=1) => (v*100).toFixed(d) + '%';
+const money = (v) => '$' + Math.round(v).toLocaleString('en-US');
+
+// KPI cards
+const kpis = [
+  ['Ventas Totales', DATA.kpi.ventas_totales.toLocaleString('en-US'), false],
+  ['% Cumplimiento Global', pct(DATA.kpi.cumplimiento_global), false],
+  ['Tasa de Mala Venta', pct(DATA.kpi.tasa_mala_venta), true],
+  ['Tasa de Early Churn', pct(DATA.kpi.tasa_early_churn), false],
+  ['Comisión Vendedores', money(DATA.kpi.comision_vendedores), false],
+  ['Comisión Coordinadores', money(DATA.kpi.comision_coordinadores), false],
+  ['MRC Mensual', money(DATA.kpi.mrc_mensual), false],
+  ['Concentración Top 3 (prom.)', pct(DATA.kpi.concentracion_top3_prom), true],
+];
+document.getElementById('kpiGrid').innerHTML = kpis.map(([label, val, alert]) =>
+  `<div class="kpi-card${alert ? ' alert' : ''}"><div class="label">${label}</div><div class="value">${val}</div></div>`
+).join('');
+
+// Chart: cumplimiento por ciudad
+const ciudadesSorted = [...DATA.ciudades].sort((a,b) => a.cumplimiento - b.cumplimiento);
+new Chart(document.getElementById('chartCiudad'), {
+  type: 'bar',
+  data: {
+    labels: ciudadesSorted.map(c => c.ciudad),
+    datasets: [{
+      data: ciudadesSorted.map(c => +(c.cumplimiento*100).toFixed(1)),
+      backgroundColor: ciudadesSorted.map(c => c.cumplimiento < 0.7 ? RED : (c.cumplimiento < 1 ? AMBER : GREEN)),
+      borderRadius: 3
+    }]
+  },
+  options: {
+    responsive: true,
+    plugins: { legend: { display: false }, tooltip: { callbacks: { label: (ctx) => ctx.parsed.y + '%' } } },
+    scales: {
+      y: { beginAtZero: true, ticks: { callback: (v) => v + '%' } },
+      x: { ticks: { autoSkip: false, maxRotation: 60, minRotation: 45, font: { size: 10 } } }
+    }
+  }
+});
+
+// Chart: mala venta por canal
+new Chart(document.getElementById('chartMalaVenta'), {
+  type: 'bar',
+  data: {
+    labels: DATA.canales.map(c => c.canal),
+    datasets: [{ data: DATA.canales.map(c => +(c.mala_venta*100).toFixed(1)), backgroundColor: NAVY, borderRadius: 3 }]
+  },
+  options: {
+    responsive: true,
+    plugins: { legend: { display: false }, tooltip: { callbacks: { label: (ctx) => ctx.parsed.y + '%' } } },
+    scales: { y: { beginAtZero: true, ticks: { callback: (v) => v + '%' } } }
+  }
+});
+
+// Chart: early churn por canal
+new Chart(document.getElementById('chartChurn'), {
+  type: 'bar',
+  data: {
+    labels: DATA.canales.map(c => c.canal),
+    datasets: [{
+      data: DATA.canales.map(c => +(c.early_churn*100).toFixed(1)),
+      backgroundColor: DATA.canales.map(c => c.early_churn > 0.3 ? RED : GREY),
+      borderRadius: 3
+    }]
+  },
+  options: {
+    responsive: true,
+    plugins: { legend: { display: false }, tooltip: { callbacks: { label: (ctx) => ctx.parsed.y + '%' } } },
+    scales: { y: { beginAtZero: true, ticks: { callback: (v) => v + '%' } } }
+  }
+});
+
+// Semaforos
+function renderSemaforo(elId, data, total) {
+  const segs = [['Rojo', data.rojo, RED], ['Amarillo', data.amarillo, AMBER], ['Verde', data.verde, GREEN]];
+  let html = '';
+  segs.forEach(([label, val, color]) => {
+    const w = (val/total*100).toFixed(1);
+    html += `<div class="semaforo-row"><div class="semaforo-bar" style="width:${w}%; min-width:30px; background:${color}"></div><span style="font-size:0.85rem; color:var(--text-secondary)">${label}: ${val}</span></div>`;
+  });
+  document.getElementById(elId).innerHTML = html;
+}
+renderSemaforo('semVendedor', DATA.semaforo_vendedor, 624);
+renderSemaforo('semCoordinador', DATA.semaforo_coordinador, 33);
+
+// Tables
+function badgeClass(s) { return 'badge badge-' + s.toLowerCase(); }
+document.getElementById('tableVendedores').innerHTML = `
+  <tr><th>Vendedor</th><th>Ciudad</th><th>Coordinador</th><th>Ventas</th><th>% Mala Venta</th><th>% Cumplimiento</th><th>Semáforo</th></tr>
+  ${DATA.top_vendedores_alerta.map(v => `
+    <tr>
+      <td>${v.vendedor}</td><td>${v.ciudad}</td><td>${v.coordinador}</td><td>${v.ventas}</td>
+      <td>${pct(v.tasa_mala_venta)}</td><td>${pct(v.cumplimiento)}</td>
+      <td><span class="${badgeClass(v.semaforo)}">${v.semaforo}</span></td>
+    </tr>`).join('')}
+`;
+document.getElementById('tableCoordinadores').innerHTML = `
+  <tr><th>Coordinador</th><th>Ciudad</th><th># Vendedores</th><th>Ventas Equipo</th><th>% Mala Venta</th><th>% Cumplimiento</th><th>Semáforo</th></tr>
+  ${DATA.top_coordinadores_alerta.map(c => `
+    <tr>
+      <td>${c.coordinador}</td><td>${c.ciudad}</td><td>${c.n_vendedores}</td><td>${c.ventas}</td>
+      <td>${pct(c.tasa_mala_venta)}</td><td>${pct(c.cumplimiento)}</td>
+      <td><span class="${badgeClass(c.semaforo)}">${c.semaforo}</span></td>
+    </tr>`).join('')}
+`;
+</script>
+</body>
+</html>
